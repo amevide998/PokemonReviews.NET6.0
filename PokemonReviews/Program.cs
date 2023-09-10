@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using PokemonReviewApp;
 using PokemonReviews.Data;
+using PokemonReviews.Interfaces;
+using PokemonReviews.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +11,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<Seed>();
+builder.Services.AddScoped<IPokemonRepository, PokemonRepository>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<DataContext>(options => {
     options.UseNpgsql(builder.Configuration.GetConnectionString("SupabaseConnection"));
 });
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 
 var app = builder.Build();
 if (args.Length == 1 && args[0].ToLower() == "seeddata")
@@ -23,10 +29,10 @@ void SeedData(IHost app)
 {
     var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
 
-    using (var scope = scopedFactory.CreateScope())
+    using (var scope = scopedFactory?.CreateScope())
     {
-        var service = scope.ServiceProvider.GetService<Seed>();
-        service.SeedDataContext();
+        var service = scope?.ServiceProvider.GetService<Seed>();
+        service?.SeedDataContext();
     }
 }
 
